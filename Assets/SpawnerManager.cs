@@ -6,6 +6,7 @@ public class SpawnerManager : MonoBehaviour
 {
 
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private GameObject tripleShotBuffPrefab;
 
     [SerializeField] private Transform parent;
 
@@ -37,10 +38,17 @@ public class SpawnerManager : MonoBehaviour
     
     }
 
+    // Bu fonksiyon her calistiginda buff spawn etme olasiligi yuzde 15dur
+    public void SpawnTripleShotBuff() { 
+        if(UnityEngine.Random.value < 0.15f) 
+            Instantiate(tripleShotBuffPrefab , Vector3.right * UnityEngine.Random.Range(-7f, 7f) + Vector3.up * 7f , Quaternion.identity , parent); 
+    }
 
 
-    // Bu fonksiyon cagirildiginda tum spawnlanma islemleri durur.
-    public void OnGameOver() { StopAllCoroutines(); }
+
+
+    // Bu fonksiyon cagirildiginda tum spawnlanma islemleri durur ve butun enemyPrefab ve debufflar silinir.
+    public void OnGameOver() { StopAllCoroutines();Destroy(parent); }
 
     
 
@@ -56,6 +64,8 @@ public class SpawnerManager : MonoBehaviour
 
             // Dusmani spawnla
             SpawnEnemy();
+            // Her bes saniyede bir yuzde 15 ihtimalle buff spawnla
+            SpawnTripleShotBuff();
         }
     
     

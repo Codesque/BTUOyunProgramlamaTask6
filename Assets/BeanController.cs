@@ -3,8 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+
+
+
+
+
 public class BeanController : MonoBehaviour
 {
+
+
+
+
 
     // Olusturdugumuz lazer prefabini Project tabinden Inspector tabindeki "Laser Prefab" yazisinin yanina surukleyin
     [SerializeField] private GameObject laserPrefab;
@@ -15,9 +25,16 @@ public class BeanController : MonoBehaviour
     public float thresholdX = 10f; 
     public float thresholdY = 10f;
 
+    // Uclu Atis icin konumlari Transform arrayinde sakliyoruz.
+    [Header("TripleShot Settings")]
+    public Transform[] shootingPointArr;
+    // Uclu atis bu "isTripleShotActive" flagi true oldugunda aktiflesecek
+    public bool isTripleShotActive = false;
+
 
 
     float lastShotTime;
+    Coroutine tripleShotCoroutine;
 
 
     SpawnerManager spawnerManager;
@@ -34,7 +51,7 @@ public class BeanController : MonoBehaviour
 
 
     // Saglik puani nesne degiskeni
-    public float Health { get; private set; } = 100f;
+    public float Health { get; private set; } = 30f;
 
     // damageAmount : Hasar Miktari
     public void TakeDamage(float damageAmount) {
@@ -47,7 +64,7 @@ public class BeanController : MonoBehaviour
         // Saglik puanini damageAmount kadar azalt.
         Health -= damageAmount;
         //  Eger yeni saglik puani 0dan kucukse spawnerManagerdaki spawn coroutinelerini durdurur.Aksi halde alinan hasari yazdir.
-        if (Health <= 0) spawnerManager.OnGameOver(); else Debug.Log("Player took " + damageAmount + "amount of damage."); 
+        if (Health <= 0) { spawnerManager.OnGameOver(); Destroy(this.gameObject); } else Debug.Log("Player took " + damageAmount + "amount of damage."); 
 
     }
 
@@ -82,17 +99,46 @@ public class BeanController : MonoBehaviour
 
     public void ShootLaser()
     {
+
+
+
+
         // Space tusuna basildiginda laser prefabini bu objenin bulundugu pozisyonun 1 birim yukarisinda olustur
         // Quaternion.identity => laserPrefabinin orijinal rotasyon degerlerini bozmadan yuklenmesini sagliyor burada.
 
         // Time.time oyunun baslangicindan itibaren gecen sureye karsilik gelir. 
         // Seri atislar bekleme suresi icerisindeyken lastShotTime + Cooldown > Time.time. 
         // Bekleme suresi bittiginde lastShotTime + Cooldown <= Time.time
+
+        // Uclu atis icin lazer objesinden iki tane daha olusturuyoruz.
         if(Input.GetKeyDown(KeyCode.Space) && lastShotTime + Cooldown < Time.time)
         {
-            Instantiate(laserPrefab , transform.position + Vector3.up , Quaternion.identity);
+            Instantiate(laserPrefab , shootingPointArr[1].position , Quaternion.identity);
+
+            if (isTripleShotActive) { 
+                Instantiate(laserPrefab, shootingPointArr[0].position, Quaternion.identity);
+                Instantiate(laserPrefab, shootingPointArr[2].position, Quaternion.identity);
+
+            }
             lastShotTime = Time.time;
         }
+    }
+
+
+    public IEnumerator TripleShotBuffCoroutine(float duration) {
+        
+        isTripleShotActive = true;
+        yield return new WaitForSeconds(duration);
+        isTripleShotActive = false;
+    
+    }
+
+    public void ActivateTripleShot(float duration) {
+
+        // Eger bu buffi aktifken bir daha aldiysak , onceki buff rutinini durdur ve yeni rutin baslat.
+        if(tripleShotCoroutine != null) StopCoroutine(tripleShotCoroutine);
+        tripleShotCoroutine = StartCoroutine(TripleShotBuffCoroutine(duration));
+    
     }
 
 
